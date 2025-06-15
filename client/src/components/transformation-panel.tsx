@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Brain, CheckCircle, Circle, Copy, Download, Star } from "lucide-react";
 import type { EnhancedPrompt } from "../types/prompt";
 import { useToast } from "@/hooks/use-toast";
+import { trackEvent } from "@/lib/firestore-analytics";
+import { useAuth } from "@/hooks/useAuth";
 
 interface TransformationPanelProps {
   enhancedPrompt: EnhancedPrompt | null;

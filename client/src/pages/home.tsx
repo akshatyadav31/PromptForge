@@ -7,6 +7,7 @@ import { PromptLibrary } from "@/components/prompt-library";
 import { FrameworkDetector } from "@/lib/framework-detector";
 import { PromptTransformer } from "@/lib/prompt-transformer";
 import { savePromptToFirestore } from "@/lib/firebase";
+import { trackEvent } from "@/lib/firestore-analytics";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import type { PromptParameters, EnhancedPrompt } from "@/types/prompt";
@@ -86,12 +87,34 @@ export default function Home() {
         
         // Save to Firebase if user is authenticated
         if (user) {
+          const applicableFrameworks = detectedFrameworks.filter(f => f.applicable).map(f => f.framework);
+          
           savePromptMutation.mutate({
             originalInput: input,
             transformedPrompt: enhanced.finalPrompt,
-            frameworks: detectedFrameworks.filter(f => f.applicable).map(f => f.framework),
+            frameworks: applicableFrameworks,
             parameters: parameters,
             useCase: useCase
+          });
+
+          // Track analytics event
+          trackEvent({
+            userId: user.uid,
+            eventType: 'prompt_created',
+            eventData: {
+              frameworks: applicableFrameworks,
+              useCase: useCase,
+              parameters: parameters
+            }
+          });
+
+          trackEvent({
+            userId: user.uid,
+            eventType: 'framework_applied',
+            eventData: {
+              frameworks: applicableFrameworks,
+              useCase: useCase
+            }
           });
         }
         

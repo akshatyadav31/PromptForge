@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithRedirect, signOut, onAuthStateChanged, User } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithRedirect, signInWithPopup, signOut, onAuthStateChanged, User } from "firebase/auth";
 import { getFirestore, collection, addDoc, getDocs, query, orderBy, where, Timestamp, doc, updateDoc, deleteDoc, getDoc, enableNetwork, disableNetwork } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -15,8 +15,22 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
 
-// Auth functions
-export const signInWithGoogle = () => signInWithRedirect(auth, googleProvider);
+// Auth functions with popup fallback
+export const signInWithGoogle = async () => {
+  try {
+    // Try popup first (works better in development)
+    await signInWithPopup(auth, googleProvider);
+  } catch (popupError: any) {
+    console.warn("Popup blocked or failed, trying redirect:", popupError);
+    // Fallback to redirect
+    try {
+      await signInWithRedirect(auth, googleProvider);
+    } catch (redirectError: any) {
+      console.error("Sign in failed:", redirectError);
+      throw redirectError;
+    }
+  }
+};
 export const signOutUser = () => signOut(auth);
 export const onAuthStateChange = (callback: (user: User | null) => void) => 
   onAuthStateChanged(auth, callback);

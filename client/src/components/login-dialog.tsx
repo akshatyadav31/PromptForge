@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { signInWithGoogle } from "@/lib/firebase";
-import { LogIn, Brain, Shield, Cloud } from "lucide-react";
+import { LogIn, Brain, Shield, Cloud, AlertTriangle } from "lucide-react";
 import { SiGoogle } from "react-icons/si";
 
 interface LoginDialogProps {
@@ -13,13 +14,23 @@ interface LoginDialogProps {
 
 export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleGoogleSignIn = async () => {
     setIsSigningIn(true);
+    setError(null);
     try {
       await signInWithGoogle();
-    } catch (error) {
+      onOpenChange(false);
+    } catch (error: any) {
       console.error("Sign in failed:", error);
+      if (error.code === 'auth/unauthorized-domain') {
+        setError('Domain not authorized. Please add this domain to your Firebase project\'s authorized domains list.');
+      } else if (error.code === 'auth/popup-blocked') {
+        setError('Popup was blocked. Please allow popups for this site and try again.');
+      } else {
+        setError('Sign in failed. Please try again.');
+      }
       setIsSigningIn(false);
     }
   };
@@ -38,6 +49,15 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
         </DialogHeader>
         
         <div className="space-y-4">
+          {error && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                {error}
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <Button 
             onClick={handleGoogleSignIn}
             disabled={isSigningIn}
@@ -47,6 +67,13 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
             <SiGoogle className="h-5 w-5 mr-3" />
             {isSigningIn ? 'Signing in...' : 'Continue with Google'}
           </Button>
+          
+          <div className="text-sm text-gray-600 text-center">
+            <p>Having trouble signing in?</p>
+            <p className="text-xs mt-1">
+              Add <code className="bg-gray-100 px-1 rounded">workspace.AkshatYadav7.repl.co</code> to Firebase authorized domains
+            </p>
+          </div>
           
           <div className="grid grid-cols-3 gap-3 mt-6">
             <Card className="text-center p-3">

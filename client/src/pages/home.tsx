@@ -6,9 +6,10 @@ import { TransformationPanel } from "@/components/transformation-panel";
 import { PromptLibrary } from "@/components/prompt-library";
 import { FrameworkDetector } from "@/lib/framework-detector";
 import { PromptTransformer } from "@/lib/prompt-transformer";
-import { apiRequest } from "@/lib/queryClient";
+import { savePromptToFirestore } from "@/lib/firebase";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 import type { PromptParameters, EnhancedPrompt } from "@/types/prompt";
-import type { InsertPrompt } from "@shared/schema";
 
 export default function Home() {
   const [input, setInput] = useState("Help me write a blog post about coffee");
@@ -21,15 +22,41 @@ export default function Home() {
   const [enhancedPrompt, setEnhancedPrompt] = useState<EnhancedPrompt | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
+  const { user } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const savePromptMutation = useMutation({
-    mutationFn: async (promptData: InsertPrompt) => {
-      const response = await apiRequest('POST', '/api/prompts', promptData);
-      return response.json();
+    mutationFn: async (promptData: {
+      originalInput: string;
+      transformedPrompt: string;
+      frameworks: string[];
+      parameters: PromptParameters;
+      useCase: string;
+    }) => {
+      if (!user) {
+        throw new Error("User must be authenticated to save prompts");
+      }
+      
+      return await savePromptToFirestore({
+        ...promptData,
+        userId: user.uid,
+      });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/prompts'] });
+      queryClient.invalidateQueries({ queryKey: ['user-prompts', user?.uid] });
+      toast({
+        title: "Prompt saved successfully",
+        description: "Your enhanced prompt has been saved to your library",
+      });
+    },
+    onError: (error) => {
+      console.error("Failed to save prompt:", error);
+      toast({
+        title: "Failed to save prompt",
+        description: "There was an error saving your prompt. Please try again.",
+        variant: "destructive",
+      });
     }
   });
 

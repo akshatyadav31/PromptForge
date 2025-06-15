@@ -23,7 +23,7 @@ export default function Home() {
   });
   const [enhancedPrompt, setEnhancedPrompt] = useState<EnhancedPrompt | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('openai/gpt-4o-mini');
+  const [selectedModel, setSelectedModel] = useState('deepseek/deepseek-r1-0528:free');
   const [useAI, setUseAI] = useState(true);
 
   const { user } = useAuth();

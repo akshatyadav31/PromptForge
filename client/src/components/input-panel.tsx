@@ -231,6 +231,7 @@ export function InputPanel({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="deepseek/deepseek-r1-0528:free">DeepSeek R1 (Free)</SelectItem>
                   <SelectItem value="openai/gpt-4o-mini">GPT-4o Mini (Fast)</SelectItem>
                   <SelectItem value="openai/gpt-4o">GPT-4o (Best)</SelectItem>
                   <SelectItem value="openai/gpt-3.5-turbo">GPT-3.5 Turbo (Budget)</SelectItem>

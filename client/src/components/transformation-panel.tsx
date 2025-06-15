@@ -15,12 +15,26 @@ interface TransformationPanelProps {
 
 export function TransformationPanel({ enhancedPrompt, isAnalyzing }: TransformationPanelProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleCopy = async () => {
     if (!enhancedPrompt) return;
     
     try {
       await navigator.clipboard.writeText(enhancedPrompt.finalPrompt);
+      
+      // Track analytics
+      if (user) {
+        trackEvent({
+          userId: user.uid,
+          eventType: 'prompt_copied',
+          eventData: {
+            useCase: enhancedPrompt.useCase,
+            frameworks: enhancedPrompt.detectedFrameworks.filter(f => f.applicable).map(f => f.framework)
+          }
+        });
+      }
+      
       toast({
         title: "Copied!",
         description: "Enhanced prompt copied to clipboard",
@@ -36,6 +50,18 @@ export function TransformationPanel({ enhancedPrompt, isAnalyzing }: Transformat
 
   const handleExport = () => {
     if (!enhancedPrompt) return;
+    
+    // Track analytics
+    if (user) {
+      trackEvent({
+        userId: user.uid,
+        eventType: 'prompt_exported',
+        eventData: {
+          useCase: enhancedPrompt.useCase,
+          frameworks: enhancedPrompt.detectedFrameworks.filter(f => f.applicable).map(f => f.framework)
+        }
+      });
+    }
     
     const content = `# Enhanced Prompt\n\n${enhancedPrompt.finalPrompt}\n\n## Original Input\n${enhancedPrompt.originalInput}\n\n## Parameters\n${JSON.stringify(enhancedPrompt.parameters, null, 2)}`;
     const blob = new Blob([content], { type: 'text/markdown' });

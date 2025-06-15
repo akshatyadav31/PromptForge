@@ -2,8 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Library, Bookmark, TrendingUp, Users, LogIn } from "lucide-react";
+import { Library, Bookmark, TrendingUp, Users, LogIn, BarChart3 } from "lucide-react";
 import { getUserPrompts } from "@/lib/firebase";
+import { getFrameworkUsageStats } from "@/lib/firestore-analytics";
 import { useAuth } from "@/hooks/useAuth";
 import type { FirebasePrompt } from "@/types/firebase";
 
@@ -16,13 +17,44 @@ export function PromptLibrary() {
     enabled: !!user,
   });
 
+  const { data: userFrameworkStats } = useQuery<Record<string, number>>({
+    queryKey: ['framework-stats', user?.uid],
+    queryFn: () => user ? getFrameworkUsageStats(user.uid) : Promise.resolve({}),
+    enabled: !!user,
+  });
+
   const recentPrompts = prompts?.slice(0, 3) || [];
 
-  const frameworkStats = [
-    { name: 'TCREI Success Rate', value: 92, color: 'bg-violet-500' },
-    { name: 'RSTI Enhancement', value: 87, color: 'bg-blue-500' },
-    { name: 'TFCDC Accuracy', value: 94, color: 'bg-green-500' },
-  ];
+  // Calculate real-time framework performance from user data
+  const getFrameworkPerformanceStats = () => {
+    if (userFrameworkStats && Object.keys(userFrameworkStats).length > 0) {
+      const totalUsage = Object.values(userFrameworkStats).reduce((a, b) => a + b, 0);
+      return [
+        { 
+          name: 'TCREI Usage', 
+          value: Math.round((userFrameworkStats['TCREI'] || 0) / Math.max(totalUsage, 1) * 100), 
+          color: 'bg-violet-500' 
+        },
+        { 
+          name: 'RSTI Usage', 
+          value: Math.round((userFrameworkStats['RSTI'] || 0) / Math.max(totalUsage, 1) * 100), 
+          color: 'bg-blue-500' 
+        },
+        { 
+          name: 'TFCDC Usage', 
+          value: Math.round((userFrameworkStats['TFCDC'] || 0) / Math.max(totalUsage, 1) * 100), 
+          color: 'bg-green-500' 
+        },
+      ];
+    }
+    return [
+      { name: 'TCREI Success Rate', value: 92, color: 'bg-violet-500' },
+      { name: 'RSTI Enhancement', value: 87, color: 'bg-blue-500' },
+      { name: 'TFCDC Accuracy', value: 94, color: 'bg-green-500' },
+    ];
+  };
+
+  const frameworkPerformanceStats = getFrameworkPerformanceStats();
 
   const communityHighlights = [
     {
@@ -109,7 +141,7 @@ export function PromptLibrary() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {frameworkStats.map((stat) => (
+              {frameworkPerformanceStats.map((stat) => (
                 <div key={stat.name} className="flex items-center justify-between">
                   <span className="text-sm">{stat.name}</span>
                   <div className="flex items-center space-x-2">

@@ -9,6 +9,8 @@ export interface AnalyticsEvent {
     frameworks?: string[];
     useCase?: string;
     parameters?: any;
+    aiModel?: string;
+    enhancementType?: string;
   };
   timestamp: Date;
 }

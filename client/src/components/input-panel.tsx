@@ -249,8 +249,8 @@ export function InputPanel({
           disabled={isAnalyzing || !input.trim()}
           className="w-full"
         >
-          <Wand2 className="h-4 w-4 mr-2" />
-          {isAnalyzing ? 'Analyzing...' : 'Analyze & Transform'}
+          {useAI ? <Bot className="h-4 w-4 mr-2" /> : <Wand2 className="h-4 w-4 mr-2" />}
+          {isAnalyzing ? 'Analyzing...' : useAI ? 'AI Enhance' : 'Rule-Based Transform'}
         </Button>
       </CardContent>
     </Card>

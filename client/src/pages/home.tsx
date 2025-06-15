@@ -6,6 +6,7 @@ import { TransformationPanel } from "@/components/transformation-panel";
 import { PromptLibrary } from "@/components/prompt-library";
 import { FrameworkDetector } from "@/lib/framework-detector";
 import { PromptTransformer } from "@/lib/prompt-transformer";
+import { OpenRouterService } from "@/lib/openrouter";
 import { savePromptToFirestore } from "@/lib/firebase";
 import { trackEvent } from "@/lib/firestore-analytics";
 import { useAuth } from "@/hooks/useAuth";
@@ -22,6 +23,8 @@ export default function Home() {
   });
   const [enhancedPrompt, setEnhancedPrompt] = useState<EnhancedPrompt | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [selectedModel, setSelectedModel] = useState('openai/gpt-4o-mini');
+  const [useAI, setUseAI] = useState(true);
 
   const { user } = useAuth();
   const { toast } = useToast();
@@ -66,64 +69,122 @@ export default function Home() {
 
     setIsAnalyzing(true);
     
-    // Simulate analysis delay for UX
-    setTimeout(() => {
-      try {
-        // Detect frameworks
-        const detectedFrameworks = FrameworkDetector.detectFrameworks(input);
-        
-        // Determine use case based on input
-        const useCase = determineUseCase(input);
-        
-        // Transform the prompt
-        const enhanced = PromptTransformer.transformPrompt(
+    try {
+      // Detect frameworks
+      const detectedFrameworks = FrameworkDetector.detectFrameworks(input);
+      
+      // Determine use case based on input
+      const useCase = determineUseCase(input);
+      
+      let finalPrompt: string;
+      let enhanced: EnhancedPrompt;
+
+      if (useAI && import.meta.env.VITE_OPENROUTER_API_KEY) {
+        try {
+          // Use AI-powered enhancement
+          const openRouterService = new OpenRouterService();
+          const applicableFrameworks = detectedFrameworks.filter(f => f.applicable).map(f => f.framework);
+          
+          finalPrompt = await openRouterService.generateEnhancedPrompt(
+            input,
+            applicableFrameworks,
+            parameters,
+            useCase,
+            selectedModel
+          );
+
+          // Create enhanced prompt object with AI-generated content
+          enhanced = {
+            originalInput: input,
+            detectedFrameworks,
+            transformationSteps: [{
+              framework: 'AI Enhanced',
+              title: `AI-Generated Prompt using ${selectedModel}`,
+              description: `Enhanced using ${applicableFrameworks.join(' + ')} frameworks with AI assistance`,
+              components: {
+                'AI Model': selectedModel,
+                'Frameworks Applied': applicableFrameworks.join(', '),
+                'Enhancement Type': 'AI-Powered Transformation'
+              },
+              status: 'complete' as const
+            }],
+            finalPrompt,
+            parameters,
+            useCase
+          };
+        } catch (aiError) {
+          console.error('AI enhancement failed, falling back to rule-based:', aiError);
+          toast({
+            title: "AI enhancement failed",
+            description: "Using rule-based enhancement instead",
+            variant: "destructive",
+          });
+          
+          // Fallback to rule-based enhancement
+          enhanced = PromptTransformer.transformPrompt(
+            input,
+            detectedFrameworks,
+            parameters,
+            useCase
+          );
+        }
+      } else {
+        // Use rule-based enhancement
+        enhanced = PromptTransformer.transformPrompt(
           input,
           detectedFrameworks,
           parameters,
           useCase
         );
-        
-        setEnhancedPrompt(enhanced);
-        
-        // Save to Firebase if user is authenticated
-        if (user) {
-          const applicableFrameworks = detectedFrameworks.filter(f => f.applicable).map(f => f.framework);
-          
-          savePromptMutation.mutate({
-            originalInput: input,
-            transformedPrompt: enhanced.finalPrompt,
-            frameworks: applicableFrameworks,
-            parameters: parameters,
-            useCase: useCase
-          });
-
-          // Track analytics event
-          trackEvent({
-            userId: user.uid,
-            eventType: 'prompt_created',
-            eventData: {
-              frameworks: applicableFrameworks,
-              useCase: useCase,
-              parameters: parameters
-            }
-          });
-
-          trackEvent({
-            userId: user.uid,
-            eventType: 'framework_applied',
-            eventData: {
-              frameworks: applicableFrameworks,
-              useCase: useCase
-            }
-          });
-        }
-        
-      } catch (error) {
-        console.error('Analysis failed:', error);
-      } finally {
-        setIsAnalyzing(false);
       }
-    }, 1500);
+      
+      setEnhancedPrompt(enhanced);
+      
+      // Save to Firebase if user is authenticated
+      if (user) {
+        const applicableFrameworks = detectedFrameworks.filter(f => f.applicable).map(f => f.framework);
+        
+        savePromptMutation.mutate({
+          originalInput: input,
+          transformedPrompt: enhanced.finalPrompt,
+          frameworks: applicableFrameworks,
+          parameters: parameters,
+          useCase: useCase
+        });
+
+        // Track analytics event
+        trackEvent({
+          userId: user.uid,
+          eventType: 'prompt_created',
+          eventData: {
+            frameworks: applicableFrameworks,
+            useCase: useCase,
+            parameters: parameters,
+            aiModel: useAI ? selectedModel : 'rule-based'
+          }
+        });
+
+        trackEvent({
+          userId: user.uid,
+          eventType: 'framework_applied',
+          eventData: {
+            frameworks: applicableFrameworks,
+            useCase: useCase,
+            enhancementType: useAI ? 'ai' : 'rule-based'
+          }
+        });
+      }
+      
+    } catch (error) {
+      console.error('Analysis failed:', error);
+      toast({
+        title: "Enhancement failed",
+        description: "Please try again or check your settings",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const determineUseCase = (input: string): string => {
@@ -154,6 +215,10 @@ export default function Home() {
               setParameters={setParameters}
               onAnalyze={handleAnalyze}
               isAnalyzing={isAnalyzing}
+              selectedModel={selectedModel}
+              setSelectedModel={setSelectedModel}
+              useAI={useAI}
+              setUseAI={setUseAI}
             />
           </div>
           

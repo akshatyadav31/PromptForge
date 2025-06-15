@@ -2,12 +2,18 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Library, Bookmark, TrendingUp, Users } from "lucide-react";
-import type { Prompt } from "@shared/schema";
+import { Library, Bookmark, TrendingUp, Users, LogIn } from "lucide-react";
+import { getUserPrompts } from "@/lib/firebase";
+import { useAuth } from "@/hooks/useAuth";
+import type { FirebasePrompt } from "@/types/firebase";
 
 export function PromptLibrary() {
-  const { data: prompts, isLoading } = useQuery<Prompt[]>({
-    queryKey: ['/api/prompts'],
+  const { user } = useAuth();
+  
+  const { data: prompts, isLoading } = useQuery<FirebasePrompt[]>({
+    queryKey: ['user-prompts', user?.uid],
+    queryFn: () => user ? getUserPrompts(user.uid) : Promise.resolve([]),
+    enabled: !!user,
   });
 
   const recentPrompts = prompts?.slice(0, 3) || [];
@@ -54,7 +60,12 @@ export function PromptLibrary() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {isLoading ? (
+              {!user ? (
+                <div className="text-center py-8 text-gray-500">
+                  <LogIn className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">Sign in to view your prompt library</p>
+                </div>
+              ) : isLoading ? (
                 <div className="space-y-3">
                   {[1, 2, 3].map((i) => (
                     <div key={i} className="animate-pulse">

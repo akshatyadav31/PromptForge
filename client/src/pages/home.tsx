@@ -84,14 +84,16 @@ export default function Home() {
         
         setEnhancedPrompt(enhanced);
         
-        // Save to backend
-        savePromptMutation.mutate({
-          originalInput: input,
-          transformedPrompt: enhanced.finalPrompt,
-          frameworks: detectedFrameworks.filter(f => f.applicable).map(f => f.framework),
-          parameters: parameters,
-          useCase: useCase
-        });
+        // Save to Firebase if user is authenticated
+        if (user) {
+          savePromptMutation.mutate({
+            originalInput: input,
+            transformedPrompt: enhanced.finalPrompt,
+            frameworks: detectedFrameworks.filter(f => f.applicable).map(f => f.framework),
+            parameters: parameters,
+            useCase: useCase
+          });
+        }
         
       } catch (error) {
         console.error('Analysis failed:', error);

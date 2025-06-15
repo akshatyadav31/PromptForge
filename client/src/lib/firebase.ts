@@ -50,11 +50,19 @@ export const getUserPrompts = async (userId: string) => {
       orderBy("createdAt", "desc")
     );
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      createdAt: doc.data().createdAt?.toDate() || new Date(),
-    }));
+    return querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        originalInput: data.originalInput,
+        transformedPrompt: data.transformedPrompt,
+        frameworks: data.frameworks,
+        parameters: data.parameters,
+        useCase: data.useCase,
+        userId: data.userId,
+        createdAt: data.createdAt?.toDate() || new Date(),
+      };
+    });
   } catch (error) {
     console.error("Error fetching user prompts:", error);
     throw error;

@@ -1,0 +1,39 @@
+1. Micro-Tuning Tactics (RSTI)
+Domain: On-the-fly prompt refinement, copywriting, any time you’ve already got a draft and need small, surgical fixes.
+Revisit previous mnemonic: Pull in a proven trick or phrase you know works.
+Separate into shorter sentences: Make complex instructions bite-sized.
+Try different phrasing: Swap a word or reorder clauses to change the model’s “mental” path.
+Introduce constraints: Add word-counts, tone markers, or formatting rules to nail down style.
+Real-Life Use Cases:
+You’ve asked ChatGPT to draft ad-copy but it’s too rambling—break it up and tighten the ask.
+You’re tuning a “Write a poem…” prompt and need exactly 12 lines—add that constraint.
+You’re crafting outreach emails and want a friendlier tone—swap “Generate” for “Hey there,” or similar.
+
+2. Macro-Level Prompt Architecture (TCREI)
+Domain: Building a new prompt from scratch, especially for complex multi-step tasks or unfamiliar domains.
+Task: Pin down the headline ask.
+Context: Supply all necessary background (audience, purpose, data).
+Resources: Link style-guides, examples, reference data.
+Evaluate: Check the output for accuracy, relevance, style.
+Iterate: Loop back—adjust T, C, or R based on what failed or succeeded.
+Real-Life Use Cases:
+Designing a training module: “Create a 5-session workshop for novice managers,” plus org charts and past feedback.
+Building a data-analysis prompt: “Analyze these sales figures; here’s the CSV and the KPI definitions.”
+Authoring a policy brief: “Audience=senior execs; Tone=formal; Embed these three graphs; Summarize in 300 words.”
+
+3. Software-Engineering Workflow (Tiny Ferrets Carry Dangerous Code)
+Domain: Day-to-day coding, debugging, and project hygiene—whether you’re solo or on a team.
+Thinking: Brainstorm and design before typing a line.
+Frameworks: Choose libraries, patterns, or architectures that solve your problem.
+Checkpoints: Embed tests, logging, and small commits to catch errors early.
+Debugging: Use breakpoints, stack traces, REPLs to root-cause issues.
+Context: Document why things exist—README, code comments, design docs.
+Real-Life Use Cases:
+Starting a new feature: sketch your algorithm (Thinking), pick Express or FastAPI (Frameworks), write a smoke test (Checkpoint).
+Hunting a production bug: drop a breakpoint at the failure site (Checkpoint → Debugging), then update your docs so the next engineer isn’t surprised (Context).
+Keeping code maintainable: always begin with design (Thinking) and end by updating the README (Context).
+
+How They Complement
+RSTI lives inside the “Iterate” phase of TCREI when you need prompt-tuning granularity.
+TCREI is your roadmap whenever you start a new prompt-engineering project.
+Tiny Ferrets steers actual code work—ideal once your prompt or API design has to become runnable software.

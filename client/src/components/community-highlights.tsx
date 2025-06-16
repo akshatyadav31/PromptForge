@@ -189,11 +189,11 @@ export function CommunityHighlights() {
               </div>
             ))}
             
-            {communityPrompts.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
-                <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No community prompts yet</p>
-                <p className="text-sm">Be the first to create and share a prompt!</p>
+            {!error && !isLoading && communityPrompts.length === 0 && (
+              <div className="text-center py-6 text-muted-foreground">
+                <TrendingUp className="h-8 w-8 mx-auto mb-3 opacity-50" />
+                <p className="text-sm">No community prompts yet</p>
+                <p className="text-xs">Create and share the first prompt!</p>
               </div>
             )}
           </div>

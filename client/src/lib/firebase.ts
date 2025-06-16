@@ -15,18 +15,37 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
 
-// Auth functions with popup fallback
+// Auth functions with proper error handling for unauthorized domains
 export const signInWithGoogle = async () => {
   try {
+    // Configure Google provider for broader domain support
+    googleProvider.setCustomParameters({
+      prompt: 'select_account'
+    });
+    
     // Try popup first (works better in development)
-    await signInWithPopup(auth, googleProvider);
+    const result = await signInWithPopup(auth, googleProvider);
+    return result;
   } catch (popupError: any) {
     console.warn("Popup blocked or failed, trying redirect:", popupError);
-    // Fallback to redirect
+    
+    // If it's an unauthorized domain error, provide helpful guidance
+    if (popupError.code === 'auth/unauthorized-domain') {
+      const currentDomain = window.location.hostname;
+      const helpMessage = `Please add "${currentDomain}" to your Firebase authorized domains in the Firebase Console under Authentication > Settings > Authorized domains.`;
+      throw new Error(helpMessage);
+    }
+    
+    // Fallback to redirect for other popup issues
     try {
       await signInWithRedirect(auth, googleProvider);
     } catch (redirectError: any) {
       console.error("Sign in failed:", redirectError);
+      if (redirectError.code === 'auth/unauthorized-domain') {
+        const currentDomain = window.location.hostname;
+        const helpMessage = `Please add "${currentDomain}" to your Firebase authorized domains in the Firebase Console under Authentication > Settings > Authorized domains.`;
+        throw new Error(helpMessage);
+      }
       throw redirectError;
     }
   }

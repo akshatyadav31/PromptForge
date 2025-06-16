@@ -4,6 +4,7 @@ import { Header } from "@/components/header";
 import { InputPanel } from "@/components/input-panel";
 import { TransformationPanel } from "@/components/transformation-panel";
 import { PromptLibrary } from "@/components/prompt-library";
+import { CommunityHighlights } from "@/components/community-highlights";
 import { FrameworkDetector } from "@/lib/framework-detector";
 import { PromptTransformer } from "@/lib/prompt-transformer";
 import { OpenRouterService } from "@/lib/openrouter";
@@ -79,7 +80,7 @@ export default function Home() {
       let finalPrompt: string;
       let enhanced: EnhancedPrompt;
 
-      if (useAI && import.meta.env.VITE_OPENROUTER_API_KEY) {
+      if (useAI) {
         try {
           // Use AI-powered enhancement
           const openRouterService = new OpenRouterService();
@@ -207,7 +208,7 @@ export default function Home() {
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 space-y-6">
             <InputPanel
               input={input}
               setInput={setInput}
@@ -220,6 +221,7 @@ export default function Home() {
               useAI={useAI}
               setUseAI={setUseAI}
             />
+            <CommunityHighlights />
           </div>
           
           <div className="lg:col-span-2">

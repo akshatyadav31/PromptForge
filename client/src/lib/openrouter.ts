@@ -34,7 +34,8 @@ export class OpenRouterService {
   constructor() {
     this.apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
     if (!this.apiKey) {
-      throw new Error('OpenRouter API key not found');
+      console.warn('OpenRouter API key not found - AI enhancement will be disabled');
+      this.apiKey = '';
     }
   }
 
@@ -50,6 +51,9 @@ export class OpenRouterService {
     useCase: string,
     model: string = 'openai/gpt-4o-mini'
   ): Promise<string> {
+    if (!this.apiKey) {
+      throw new Error('OpenRouter API key is required for AI enhancement');
+    }
     const systemPrompt = this.createSystemPrompt(frameworks, parameters, useCase);
     const userPrompt = this.createUserPrompt(originalInput, parameters);
 

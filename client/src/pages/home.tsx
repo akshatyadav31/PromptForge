@@ -55,13 +55,15 @@ export default function Home() {
         description: "Your enhanced prompt has been saved to your library",
       });
     },
-    onError: (error) => {
-      console.error("Failed to save prompt:", error);
-      toast({
-        title: "Failed to save prompt",
-        description: "There was an error saving your prompt. Please try again.",
-        variant: "destructive",
-      });
+    onError: (error: any) => {
+      console.log("Prompt saving unavailable:", error);
+      // Don't show error toast for permission issues - saving is optional
+      if (error?.code !== 'permission-denied') {
+        toast({
+          title: "Could not save prompt",
+          description: "Prompt enhancement completed successfully",
+        });
+      }
     }
   });
 
@@ -141,39 +143,49 @@ export default function Home() {
       
       setEnhancedPrompt(enhanced);
       
-      // Save to Firebase if user is authenticated
+      // Save to Firebase if user is authenticated (optional)
       if (user) {
-        const applicableFrameworks = detectedFrameworks.filter(f => f.applicable).map(f => f.framework);
-        
-        savePromptMutation.mutate({
-          originalInput: input,
-          transformedPrompt: enhanced.finalPrompt,
-          frameworks: applicableFrameworks,
-          parameters: parameters,
-          useCase: useCase
-        });
-
-        // Track analytics event
-        trackEvent({
-          userId: user.uid,
-          eventType: 'prompt_created',
-          eventData: {
+        try {
+          const applicableFrameworks = detectedFrameworks.filter(f => f.applicable).map(f => f.framework);
+          
+          savePromptMutation.mutate({
+            originalInput: input,
+            transformedPrompt: enhanced.finalPrompt,
             frameworks: applicableFrameworks,
-            useCase: useCase,
             parameters: parameters,
-            aiModel: useAI ? selectedModel : 'rule-based'
-          }
-        });
+            useCase: useCase
+          });
 
-        trackEvent({
-          userId: user.uid,
-          eventType: 'framework_applied',
-          eventData: {
-            frameworks: applicableFrameworks,
-            useCase: useCase,
-            enhancementType: useAI ? 'ai' : 'rule-based'
+          // Track analytics event (silent fail if not authorized)
+          try {
+            await trackEvent({
+              userId: user.uid,
+              eventType: 'prompt_created',
+              eventData: {
+                frameworks: applicableFrameworks,
+                useCase: useCase,
+                parameters: parameters,
+                aiModel: useAI ? selectedModel : 'rule-based'
+              }
+            });
+
+            await trackEvent({
+              userId: user.uid,
+              eventType: 'framework_applied',
+              eventData: {
+                frameworks: applicableFrameworks,
+                useCase: useCase,
+                enhancementType: useAI ? 'ai' : 'rule-based'
+              }
+            });
+          } catch (analyticsError) {
+            // Analytics tracking is optional - don't block the main flow
+            console.log('Analytics tracking unavailable:', analyticsError);
           }
-        });
+        } catch (saveError) {
+          // Saving is optional - don't block the enhancement
+          console.log('Prompt saving unavailable:', saveError);
+        }
       }
       
     } catch (error) {

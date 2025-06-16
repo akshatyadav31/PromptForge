@@ -24,10 +24,12 @@ export function CommunityHighlights() {
   const [selectedPrompt, setSelectedPrompt] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const { data: communityPrompts = [], isLoading, refetch } = useQuery({
+  const { data: communityPrompts = [], isLoading, error } = useQuery({
     queryKey: ['community-prompts'],
     queryFn: getAllPublicPrompts,
     refetchInterval: 30000, // Refetch every 30 seconds for real-time updates
+    retry: false, // Don't retry on permission errors
+    throwOnError: false, // Handle errors gracefully
   });
 
   const handleCopyPrompt = async (prompt: string) => {
@@ -103,9 +105,16 @@ export function CommunityHighlights() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-96">
+        <ScrollArea className="h-80">
           <div className="space-y-4">
-            {communityPrompts.slice(0, 10).map((prompt) => (
+            {error && (
+              <div className="text-center py-6 text-muted-foreground">
+                <TrendingUp className="h-8 w-8 mx-auto mb-3 opacity-50" />
+                <p className="text-sm">Community features will be available once authentication is set up</p>
+              </div>
+            )}
+            
+            {!error && communityPrompts.slice(0, 8).map((prompt) => (
               <div
                 key={prompt.id}
                 className={cn(

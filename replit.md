@@ -110,6 +110,12 @@ PromptForge is an intelligent prompt engineering tool that automatically applies
 ```
 Changelog:
 - June 16, 2025. Initial setup
+- June 16, 2025. Migration from Replit Agent to standard Replit environment completed
+  - Added Firebase authentication with Google OAuth
+  - Implemented automatic prompt saving to Firestore
+  - Added real-time community highlights feature
+  - Configured OpenRouter API integration for AI-powered enhancements
+  - Enhanced error handling for Firebase domain authorization
 ```
 
 ## User Preferences

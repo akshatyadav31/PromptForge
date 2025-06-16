@@ -24,8 +24,11 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
       onOpenChange(false);
     } catch (error: any) {
       console.error("Sign in failed:", error);
-      if (error.code === 'auth/unauthorized-domain') {
-        setError('Domain not authorized. Please add this domain to your Firebase project\'s authorized domains list.');
+      if (error.message && error.message.includes('authorized domains')) {
+        setError(error.message);
+      } else if (error.code === 'auth/unauthorized-domain') {
+        const currentDomain = window.location.hostname;
+        setError(`Please add "${currentDomain}" to your Firebase authorized domains in the Firebase Console under Authentication > Settings > Authorized domains.`);
       } else if (error.code === 'auth/popup-blocked') {
         setError('Popup was blocked. Please allow popups for this site and try again.');
       } else {

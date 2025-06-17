@@ -80,66 +80,67 @@ export default function Home() {
       const useCase = determineUseCase(input);
       
       let finalPrompt: string;
-      let enhanced: EnhancedPrompt;
+          let enhanced: EnhancedPrompt;
 
-      if (useAI) {
-        try {
-          // Use AI-powered enhancement
-          const openRouterService = new OpenRouterService();
-          const applicableFrameworks = detectedFrameworks.filter(f => f.applicable).map(f => f.framework);
-          
-          finalPrompt = await openRouterService.generateEnhancedPrompt(
-            input,
-            applicableFrameworks,
-            parameters,
-            useCase,
-            selectedModel
-          );
-
-          // Create enhanced prompt object with AI-generated content
-          enhanced = {
-            originalInput: input,
-            detectedFrameworks,
-            transformationSteps: [{
-              framework: 'AI Enhanced',
-              title: `AI-Generated Prompt using ${selectedModel}`,
-              description: `Enhanced using ${applicableFrameworks.join(' + ')} frameworks with AI assistance`,
-              components: {
-                'AI Model': selectedModel,
-                'Frameworks Applied': applicableFrameworks.join(', '),
-                'Enhancement Type': 'AI-Powered Transformation'
-              },
-              status: 'complete' as const
-            }],
-            finalPrompt,
-            parameters,
-            useCase
-          };
-        } catch (aiError) {
-          console.error('AI enhancement failed, falling back to rule-based:', aiError);
-          toast({
-            title: "AI enhancement failed",
-            description: "Using rule-based enhancement instead",
-            variant: "destructive",
-          });
-          
-          // Fallback to rule-based enhancement
-          enhanced = PromptTransformer.transformPrompt(
+          // Always generate rule-based transformation steps
+          const ruleBasedEnhanced = PromptTransformer.transformPrompt(
             input,
             detectedFrameworks,
             parameters,
             useCase
           );
-        }
-      } else {
-        // Use rule-based enhancement
-        enhanced = PromptTransformer.transformPrompt(
-          input,
-          detectedFrameworks,
-          parameters,
-          useCase
-        );
-      }
+
+          if (useAI) {
+            try {
+              // Use AI-powered enhancement
+              const openRouterService = new OpenRouterService();
+              const applicableFrameworks = detectedFrameworks.filter(f => f.applicable).map(f => f.framework);
+              
+              finalPrompt = await openRouterService.generateEnhancedPrompt(
+                input,
+                applicableFrameworks,
+                parameters,
+                useCase,
+                selectedModel
+              );
+
+              // Combine AI-generated step with rule-based steps
+              enhanced = {
+                originalInput: input,
+                detectedFrameworks,
+                transformationSteps: [
+                  {
+                    framework: 'AI Enhanced',
+                    title: `AI-Generated Prompt using ${selectedModel}`,
+                    description: `Enhanced using ${applicableFrameworks.join(' + ')} frameworks with AI assistance`,
+                    components: {
+                      'AI Model': selectedModel,
+                      'Frameworks Applied': applicableFrameworks.join(', '),
+                      'Enhancement Type': 'AI-Powered Transformation'
+                    },
+                    status: 'complete' as const
+                  },
+                  ...ruleBasedEnhanced.transformationSteps // Add rule-based steps
+                ],
+                finalPrompt,
+                parameters,
+                useCase
+              };
+            } catch (aiError) {
+              console.error('AI enhancement failed, falling back to rule-based:', aiError);
+              toast({
+                title: "AI enhancement failed",
+                description: "Using rule-based enhancement instead",
+                variant: "destructive",
+              });
+              
+              // Fallback to rule-based enhancement
+              enhanced = ruleBasedEnhanced;
+            }
+          } else {
+            // Use rule-based enhancement
+            enhanced = ruleBasedEnhanced;
+          }
       
       setEnhancedPrompt(enhanced);
       

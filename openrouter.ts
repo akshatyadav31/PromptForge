@@ -34,8 +34,7 @@ export class OpenRouterService {
   constructor() {
     this.apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
     if (!this.apiKey) {
-      console.warn('OpenRouter API key not found - AI enhancement will be disabled');
-      this.apiKey = '';
+      throw new Error('OpenRouter API key not found');
     }
   }
 
@@ -49,11 +48,8 @@ export class OpenRouterService {
       wordCount: number;
     },
     useCase: string,
-    model: string = 'deepseek/deepseek-r1' // Updated to use DeepSeek R1 as default
+    model: string = 'openai/gpt-4o-mini'
   ): Promise<string> {
-    if (!this.apiKey) {
-      throw new Error('OpenRouter API key is required for AI enhancement');
-    }
     const systemPrompt = this.createSystemPrompt(frameworks, parameters, useCase);
     const userPrompt = this.createUserPrompt(originalInput, parameters);
 
@@ -82,7 +78,7 @@ export class OpenRouterService {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(`OpenRouter API error: ${response.status} - ${errorData.error?.message || response.statusText || 'Unknown error'}`);
+        throw new Error(`OpenRouter API error: ${response.status} - ${errorData.error?.message || response.statusText}`);
       }
 
       const data: OpenRouterResponse = await response.json();
@@ -167,10 +163,7 @@ Provide only the enhanced prompt without any meta-commentary or explanations.`;
       return data.data?.map((model: any) => model.id) || [];
     } catch (error) {
       console.error('Error fetching models:', error);
-      // Updated fallback models list with DeepSeek R1 first
       return [
-        'deepseek/deepseek-r1',
-        'deepseek/deepseek-r1-distill-llama-70b',
         'openai/gpt-4o-mini',
         'openai/gpt-3.5-turbo',
         'anthropic/claude-3.5-sonnet',
